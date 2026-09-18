@@ -213,6 +213,7 @@
   .orders .od{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 15px;margin-bottom:9px;}
   .od .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
   .od .st{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
+  .od .st.unpaid{background:rgba(138,148,160,.12);color:var(--ink-dim);border:1px solid rgba(138,148,160,.35);}
   .od .st.pending{background:rgba(245,184,90,.12);color:var(--warn);border:1px solid rgba(245,184,90,.3);}
   .od .st.doing{background:rgba(79,198,232,.1);color:var(--accent);border:1px solid var(--line2);}
   .od .st.done{background:rgba(82,196,26,.1);color:var(--ok);border:1px solid rgba(82,196,26,.3);}
@@ -314,9 +315,30 @@
     .reveal,.reveal [data-stag],.hero-bg,.hero-tag,.hero h1,.hero p,.hero-cta,.cookie{opacity:1 !important;transform:none !important;}
   }
 
-  @media (min-width:481px){
-    .shell{border-left:1px solid var(--line);border-right:1px solid var(--line);}
-  }
+  /* ===== 支付弹窗（350ms 淡入淡出，遮罩 ≤0.6） ===== */
+  .pay-mask{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,8,12,.6);opacity:0;pointer-events:none;transition:opacity var(--dur-pop) ease;}
+  .pay-mask.show{opacity:1;pointer-events:auto;}
+  .pay-modal{position:relative;width:100%;max-width:400px;max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,#101A24,#0B1118);border:1px solid var(--line2);border-radius:22px;padding:22px 20px 18px;transform:translateY(12px);opacity:0;transition:transform var(--dur-pop) ease,opacity var(--dur-pop) ease;}
+  .pay-mask.show .pay-modal{transform:none;opacity:1;}
+  .pay-x{position:absolute;top:12px;right:12px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;color:var(--ink-dim);font-size:16px;transition:opacity .2s ease;}
+  .pay-x:hover{opacity:.7;}
+  .pay-head{text-align:center;margin-bottom:14px;}
+  .pay-head h3{font-size:18px;font-weight:800;margin-top:2px;}
+  .pay-head p{font-size:12px;color:var(--ink-dim);margin-top:3px;}
+  .pay-ticket{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:16px;}
+  .pt-row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13.5px;padding:3px 0;}
+  .pt-row span{color:var(--ink-dim);}
+  .pt-row b{font-weight:600;text-align:right;}
+  .pt-row b.amt{color:var(--warn);font-size:17px;font-weight:800;}
+  .pay-qrs{display:flex;gap:14px;justify-content:center;margin-bottom:12px;}
+  .qr{position:relative;width:118px;text-align:center;}
+  .qr img{width:118px;height:118px;border-radius:12px;border:1px solid var(--line);background:#fff;padding:8px;object-fit:contain;}
+  .qr .qr-ph{display:none;position:absolute;inset:0;border-radius:12px;background:var(--panel2);border:1px dashed var(--line);align-items:center;justify-content:center;color:var(--ink-faint);font-size:11px;text-align:center;padding:8px;line-height:1.5;}
+  .qr img[style*="display: none"] + .qr-ph{display:flex;}
+  .qr p{margin-top:6px;font-size:12px;color:var(--ink-dim);}
+  .pay-tip{font-size:12px;color:var(--warn);text-align:center;margin-bottom:14px;line-height:1.5;}
+  .pay-acts{display:flex;flex-direction:column;gap:8px;}
+  .pay-acts .btn{width:100%;}
 </style>
 </head>
 <body>
@@ -757,6 +779,39 @@
     </div>
   </div>
 
+  <!-- ===== 支付弹窗 ===== -->
+  <div class="pay-mask" id="payMask">
+    <div class="pay-modal" id="payModal">
+      <button class="pay-x" id="payClose" aria-label="关闭">✕</button>
+      <div class="pay-head">
+        <span class="kicker">Secure Payment</span>
+        <h3>扫码支付</h3>
+        <p>付款到账后，订单才会同步到店方接单台</p>
+      </div>
+      <div class="pay-ticket">
+        <div class="pt-row"><span>订单</span><b id="payName"></b></div>
+        <div class="pt-row"><span>金额</span><b class="amt" id="payPrice"></b></div>
+      </div>
+      <div class="pay-qrs">
+        <div class="qr">
+          <img id="payWechat" src="qrcode/wechat.png" alt="微信收款码" onerror="this.style.display='none'">
+          <div class="qr-ph">微信收款码<br>待店主上传</div>
+          <p>微信支付</p>
+        </div>
+        <div class="qr">
+          <img id="payAlipay" src="qrcode/alipay.png" alt="支付宝收款码" onerror="this.style.display='none'">
+          <div class="qr-ph">支付宝收款码<br>待店主上传</div>
+          <p>支付宝</p>
+        </div>
+      </div>
+      <p class="pay-tip">请先完成扫码付款，再点击下方按钮同步订单；未付款不会生成店方订单。</p>
+      <div class="pay-acts">
+        <button class="btn btn-primary" id="payConfirm">我已付款，同步订单</button>
+        <button class="btn btn-ghost" id="payLater">稍后付款</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -946,6 +1001,16 @@
 
   /* 全局事件委托 */
   document.addEventListener('click', function(e){
+    var pay = e.target.closest('[data-pay]');
+    if(pay){
+      e.preventDefault();
+      var no = pay.getAttribute('data-pay');
+      var list = getOrders();
+      for(var i=0;i<list.length;i++){
+        if(list[i].no===no && list[i].status==='unpaid'){ showPayModal(list[i]); break; }
+      }
+      return;
+    }
     var el = e.target.closest('[data-nav]');
     if(!el) return;
     e.preventDefault();
@@ -1183,17 +1248,61 @@
       contact: $('#fContact').value.trim(),
       note: $('#fNote').value.trim(),
       time: nowStr(),
-      status: 'pending'
+      status: 'unpaid'        /* 先付款，后同步：未付款订单只存本机 */
     };
     list.unshift(rec);
     setOrders(list);
-    syncOrderToWecom(rec);
     state.order = null;
     state.selPlayer = null;
     ['fId','fContact','fNote'].forEach(function(k){ $('#'+k).value=''; });
     $('#fServer').value='default'; $('#fAgree').checked=false;
+    showPayModal(rec);        /* 弹收款码，付款确认后才同步企微 */
+  }
+
+  /* ===== 支付弹窗 ===== */
+  var payRec = null;
+  function showPayModal(rec){
+    payRec = rec;
+    $('#payName').textContent = rec.name;
+    $('#payPrice').textContent = '¥' + money(rec.price);
+    var m = $('#payMask');
+    m.classList.remove('hide');
+    void m.offsetWidth;               /* 强制重排，触发淡入 */
+    m.classList.add('show');
+  }
+  function hidePayModal(){
+    var m = $('#payMask');
+    m.classList.remove('show');
+    setTimeout(function(){ m.classList.add('hide'); }, 350);
+  }
+  function payConfirm(){
+    if(!payRec) return;
+    var rec = payRec;
+    var list = getOrders();
+    for(var i=0;i<list.length;i++) if(list[i].no===rec.no){ list[i] = rec; break; }
+    rec.status = 'pending';           /* 顾客声明已付款 → 待接单 */
+    rec.paidAt = nowStr();
+    rec.note = ((rec.note&&rec.note.trim()) ? rec.note.trim() + ' | ' : '') + '顾客已付款·请核验到账';
+    setOrders(list);
+    syncOrderToWecom(rec);            /* 只有此时才同步企微 */
+    hidePayModal();
     nav('success', {no: rec.no});
   }
+  function payLater(){
+    if(payRec){
+      var rec = payRec;
+      alert('订单 ' + rec.no + ' 已存为「待付款」。请尽快完成支付，在「我的订单」中可继续付款。');
+      payRec = null;
+      hidePayModal();
+      nav('orders');
+    }
+  }
+  $('#payConfirm').addEventListener('click', payConfirm);
+  $('#payLater').addEventListener('click', payLater);
+  $('#payClose').addEventListener('click', payLater);
+  $('#payMask').addEventListener('click', function(e){
+    if(e.target === this) payLater();
+  });
 
   /* ===== 成功页 ===== */
   function renderSuccess(){
@@ -1305,6 +1414,7 @@
 
   /* ===== 订单列表 ===== */
   var STATUS_META = {
+    unpaid:  {t:'待付款', c:'unpaid'},
     pending: {t:'待接单', c:'pending'},
     doing:   {t:'护航中', c:'doing'},
     done:    {t:'已完成', c:'done'}
@@ -1334,22 +1444,12 @@
         '</div>' +
         '<div class="t">'+esc(o.name)+'</div>' +
         '<div class="s">'+o.endName+(o.server?(' · '+esc(o.server)):'')+' · 打手档位 '+esc(o.svc.lv)+(o.playerName?(' · 指定 '+esc(o.playerName)):'')+'</div>' +
-        '<div class="foot"><b>¥'+money(o.price)+'</b><span class="tm">'+esc(o.time)+'</span></div>';
+        '<div class="foot"><b>¥'+money(o.price)+'</b><span class="tm">'+esc(o.time)+'</span></div>' +
+        (o.status==='unpaid'
+          ? '<button class="btn btn-primary" style="width:100%;margin-top:10px;" data-pay="'+esc(o.no)+'">去付款</button>'
+          : '');
       box.appendChild(el);
     });
-    var demo = document.createElement('button');
-    demo.className = 'btn btn-ghost';
-    demo.style.cssText = 'width:100%;margin-top:12px;';
-    demo.textContent = '载入 2 条示例订单（演示用）';
-    demo.onclick = function(){
-      var ex = [
-        {no:'XH'+Date.now().toString().slice(-12), tab:'hut', end:'mobile', svc:PRICE.hut.mobile[1], name:'护航保底单 · 保底688万', endName:'手游', server:'QQ 区', price:55, contact:'wx_demo01', note:'', time:nowStr(), status:'pending'},
-        {no:'XH'+Date.now().toString().slice(-12), tab:'play', end:'pc', svc:PRICE.play.pc[1], name:'技术陪玩 · 精英', endName:'PC 端', server:'微信区', price:50, contact:'qq_demo02', note:'', time:nowStr(), status:'done', playerId:'pl-01', playerName:'阿泽'}
-      ];
-      setOrders(ex.concat(getOrders()));
-      renderOrders(); refreshDot();
-    };
-    box.appendChild(demo);
   }
 
   /* ===== Cookie 条（淡入淡出 350ms） ===== */
