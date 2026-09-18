@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>学航护航站 · 大学生护航陪玩</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap">
+<style>
+  :root{
+    --bg:#0A0E14;
+    --bg2:#0D141C;
+    --panel:rgba(255,255,255,.03);
+    --panel2:rgba(255,255,255,.055);
+    --line:rgba(255,255,255,.08);
+    --line2:rgba(79,198,232,.35);
+    --ink:#F2F5F7;
+    --ink-dim:#8A94A0;
+    --ink-faint:#5C6672;
+    --accent:#4FC6E8;
+    --warn:#F5B85A;
+    --ok:#52C41A;
+    --radius:16px;
+    /* 动效统一令牌 */
+    --dur-enter:.6s;      /* 入场动画 600ms */
+    --ease-enter:ease-out;/* 缓动 ease-out */
+    --move-enter:12px;    /* 入场位移 12px */
+    --dur-hover:.2s;      /* hover 过渡 200ms */
+    --dur-pop:.35s;       /* 弹层淡入淡出 350ms */
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Noto Sans SC','PingFang SC','Segoe UI',Arial,sans-serif;font-size:15px;line-height:1.65;}
+  body{padding-bottom:env(safe-area-inset-bottom);}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+  img{display:block;max-width:100%;}
+  .shell{max-width:560px;margin:0 auto;min-height:100vh;position:relative;}
+
+  /* ===== 顶栏 ===== */
+  .topbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);background:rgba(10,14,20,.82);border-bottom:1px solid var(--line);}
+  .topbar-in{display:flex;align-items:center;gap:12px;padding:12px 16px;max-width:560px;margin:0 auto;}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15.5px;letter-spacing:.02em;}
+  .brand .logo{width:28px;height:28px;flex:none;border-radius:8px;background:linear-gradient(135deg,var(--accent),#2E8FAD);display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(79,198,232,.35);}
+  .brand small{font-weight:400;color:var(--ink-dim);font-size:11px;letter-spacing:.14em;margin-left:2px;}
+  .back{width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;color:var(--ink-dim);transition:opacity .2s ease;position:relative;}
+  .back:hover{opacity:.72;}
+  .back:active{opacity:.55;}
+  .spacer{flex:1;}
+
+  /* ===== 通用区块 ===== */
+  section[data-route]{display:none;}
+  section[data-route].active{display:block;animation:fadeUp var(--dur-enter) var(--ease-enter) both;}
+  /* 首页由 Hero 错峰 + 区块 reveal 承担入场，避免与 section 级动画叠加成 24px 位移 */
+  section[data-route="home"].active{animation:none;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  .pad{padding:18px 16px 28px;}
+  .sec{padding:26px 16px;}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:16px;}
+  .kicker{font-size:11px;letter-spacing:.22em;color:var(--accent);font-weight:500;text-transform:uppercase;}
+  h2.title{font-size:21px;font-weight:800;letter-spacing:.01em;line-height:1.3;}
+  .sub{font-size:13px;color:var(--ink-dim);}
+  .divider{height:1px;background:var(--line);}
+
+  /* ===== 首页 Hero ===== */
+  .hero{position:relative;overflow:hidden;}
+  .hero-bg{position:absolute;inset:-28px 0;background:linear-gradient(180deg,rgba(10,14,20,.55) 0%,rgba(10,14,20,.92) 78%,var(--bg) 100%),url('https://aka.doubaocdn.com/s/xdqAVKUvIx') center 30%/cover no-repeat;will-change:transform;}
+  .hero-in{position:relative;padding:74px 20px 52px;text-align:center;}
+  .hero-tag{display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.2em;color:var(--accent);border:1px solid var(--line2);border-radius:999px;padding:5px 13px;background:rgba(79,198,232,.07);}
+  .hero-tag .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+  .hero h1{font-size:34px;font-weight:900;line-height:1.22;letter-spacing:.01em;margin:18px 0 12px;}
+  .hero h1 em{font-style:normal;color:var(--accent);}
+  .hero p{font-size:14.5px;color:var(--ink-dim);max-width:340px;margin:0 auto 26px;line-height:1.75;}
+  .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+  /* Hero 错峰入场：图片(背景)先出现，+120ms 标题，再 +80ms 正文 */
+  .hero-bg{animation:heroBgIn var(--dur-enter) var(--ease-enter) both;}
+  .hero-tag{animation:heroFade var(--dur-enter) var(--ease-enter) .12s both;}
+  .hero h1{animation:heroFade var(--dur-enter) var(--ease-enter) .12s both;}
+  .hero p{animation:heroFade var(--dur-enter) var(--ease-enter) .2s both;}
+  .hero-cta{animation:heroFade var(--dur-enter) var(--ease-enter) .2s both;}
+  @keyframes heroBgIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes heroFade{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border-radius:13px;font-size:15px;font-weight:700;transition:opacity .2s ease,filter .2s ease;letter-spacing:.01em;}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),#37A9CE);color:#07131A;box-shadow:0 6px 24px rgba(79,198,232,.28);}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-primary:active{opacity:.82;filter:brightness(.98);}
+  .btn-ghost{border:1px solid var(--line2);color:var(--ink);background:rgba(79,198,232,.05);}
+  .btn-ghost:hover{filter:brightness(1.08);}
+  .btn-ghost:active{opacity:.8;filter:brightness(.97);}
+  .btn[disabled]{opacity:.35;pointer-events:none;}
+  .btn-block{width:100%;}
+
+  /* ===== 信任点 ===== */
+  .trust-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .trust-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 14px;transition:opacity .2s ease,filter .2s ease;}
+  .trust-card:hover{filter:brightness(1.06);}
+  .trust-card:active{opacity:.8;filter:brightness(.98);}
+  .trust-card .ico{width:34px;height:34px;border-radius:9px;background:rgba(79,198,232,.1);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:10px;}
+  .trust-card .t{font-size:14px;font-weight:700;line-height:1.4;}
+  .trust-card .d{font-size:11.5px;color:var(--ink-dim);line-height:1.55;margin-top:3px;}
+
+  /* ===== 服务入口 ===== */
+  .svc-card{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px 16px;margin-bottom:10px;transition:opacity .2s ease,filter .2s ease;position:relative;overflow:hidden;}
+  .svc-card:hover{filter:brightness(1.06);}
+  .svc-card:active{opacity:.8;filter:brightness(.98);}
+  .svc-ico{width:46px;height:46px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+  .svc-ico.hut{background:rgba(79,198,232,.12);color:var(--accent);border:1px solid var(--line2);}
+  .svc-ico.play{background:rgba(245,184,90,.12);color:var(--warn);border:1px solid rgba(245,184,90,.35);}
+  .svc-ico.trial{background:rgba(82,196,26,.1);color:var(--ok);border:1px solid rgba(82,196,26,.3);}
+  .svc-main{flex:1;min-width:0;}
+  .svc-main .t{font-size:15.5px;font-weight:800;}
+  .svc-main .d{font-size:12px;color:var(--ink-dim);margin-top:2px;}
+  .svc-price{text-align:right;flex:none;}
+  .svc-price b{display:block;font-size:17px;color:var(--accent);letter-spacing:.01em;}
+  .svc-price span{font-size:10.5px;color:var(--ink-faint);}
+  .svc-arrow{color:var(--ink-faint);flex:none;margin-left:2px;}
+
+  /* ===== 保障机制 ===== */
+  .sure{position:relative;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,rgba(79,198,232,.05),rgba(79,198,232,.005));padding:20px 16px;}
+  .sure-steps{display:flex;flex-direction:column;gap:0;margin-top:6px;}
+  .sure-step{display:flex;gap:13px;padding:11px 0;position:relative;}
+  .sure-step + .sure-step{border-top:1px dashed var(--line);}
+  .step-no{width:26px;height:26px;flex:none;border-radius:50%;background:rgba(79,198,232,.12);border:1px solid var(--line2);color:var(--accent);font-size:12.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px;}
+  .step-no.danger{background:rgba(245,184,90,.12);border-color:rgba(245,184,90,.4);color:var(--warn);}
+  .sure-step .tt{font-size:14.5px;font-weight:800;}
+  .sure-step .dd{font-size:12.5px;color:var(--ink-dim);line-height:1.6;margin-top:2px;}
+  .sure-step .dd b{color:var(--ink);font-weight:600;}
+
+  /* ===== 打手画像 ===== */
+  .player{display:flex;gap:16px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;}
+  .player img{width:104px;height:132px;object-fit:cover;border-radius:13px;flex:none;border:1px solid var(--line2);}
+  .player .t{font-size:16.5px;font-weight:800;line-height:1.35;}
+  .player .d{font-size:12.5px;color:var(--ink-dim);line-height:1.7;margin-top:6px;}
+  .player .d b{color:var(--accent);font-weight:600;}
+
+  /* ===== 免责横幅 ===== */
+  .notice{display:flex;gap:12px;border:1px solid rgba(245,184,90,.28);background:rgba(245,184,90,.05);border-radius:14px;padding:14px;font-size:12.5px;color:#CBB893;line-height:1.7;}
+  .notice svg{flex:none;margin-top:2px;color:var(--warn);}
+
+  /* ===== 点单页 ===== */
+  .menu-head{display:flex;align-items:center;justify-content:space-between;margin:6px 0 2px;}
+  .menu-head h2{font-size:20px;font-weight:800;}
+  .menu-head .sub{font-size:12px;}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:4px;margin:14px 0 4px;}
+  .seg button{min-height:42px;border-radius:10px;font-size:14px;font-weight:600;color:var(--ink-dim);transition:opacity .2s ease,filter .2s ease;}
+  .seg button:hover{filter:brightness(1.1);}
+  .seg button:active{opacity:.75;}
+  .seg button.on{background:var(--accent);color:#07131A;font-weight:800;box-shadow:0 4px 14px rgba(79,198,232,.25);}
+  .tabs{display:flex;gap:8px;margin:14px 0 12px;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tabs button{flex:none;min-height:40px;padding:0 18px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;font-weight:600;color:var(--ink-dim);background:var(--panel);transition:opacity .2s ease,filter .2s ease;}
+  .tabs button:hover{filter:brightness(1.1);}
+  .tabs button:active{opacity:.75;}
+  .tabs button.on{border-color:var(--line2);background:rgba(79,198,232,.1);color:var(--accent);font-weight:700;}
+  .tip{font-size:12px;color:var(--ink-faint);margin:-6px 0 14px;}
+
+  .plan{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px 14px;margin-bottom:9px;transition:opacity .2s ease,filter .2s ease;position:relative;}
+  .plan.sel{border-color:var(--line2);background:rgba(79,198,232,.06);box-shadow:0 0 0 1px var(--line2);}
+  .plan:hover{filter:brightness(1.05);}
+  .plan:active{opacity:.8;filter:brightness(.98);}
+  .plan .tag{position:absolute;top:9px;right:46px;font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;}
+  .plan .tag.hot{background:rgba(245,184,90,.14);color:var(--warn);border:1px solid rgba(245,184,90,.35);}
+  .plan .tag.new{background:rgba(82,196,26,.12);color:var(--ok);border:1px solid rgba(82,196,26,.3);}
+  .plan .main{flex:1;min-width:0;}
+  .plan .t{font-size:15.5px;font-weight:800;}
+  .plan .s{font-size:12px;color:var(--ink-dim);margin-top:1px;}
+  .plan .lv{font-size:10.5px;color:var(--ink-faint);margin-top:5px;display:inline-flex;align-items:center;gap:5px;}
+  .plan .lv::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);}
+  .plan .right{text-align:right;flex:none;}
+  .plan .right b{display:block;font-size:17.5px;color:var(--accent);}
+  .plan .right span{font-size:10.5px;color:var(--ink-faint);}
+  .radio{width:22px;height:22px;flex:none;border-radius:50%;border:1.5px solid var(--line2);display:flex;align-items:center;justify-content:center;color:transparent;transition:opacity .2s ease;}
+  .plan.sel .radio{background:var(--accent);border-color:var(--accent);color:#07131A;}
+
+  /* 结算条 */
+  .order-bar{position:fixed;left:0;right:0;bottom:0;z-index:40;max-width:560px;margin:0 auto;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(13,18,26,.9);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line);}
+  .order-bar-in{display:flex;align-items:center;gap:12px;}
+  .sum{flex:1;min-width:0;}
+  .sum .t{font-size:12px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sum .p{font-size:21px;font-weight:900;color:var(--accent);letter-spacing:.01em;}
+  .sum .p small{font-size:12px;font-weight:500;color:var(--ink-dim);margin-left:3px;}
+
+  /* ===== 表单 ===== */
+  .form-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 16px;margin-top:16px;}
+  .form-card .f-title{font-size:13px;font-weight:700;color:var(--ink-dim);margin-bottom:14px;letter-spacing:.04em;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-dim);margin-bottom:7px;}
+  .field label em{font-style:normal;color:var(--accent);margin-left:3px;}
+  .field input,.field select{width:100%;min-height:48px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);color:var(--ink);font-size:15px;padding:0 14px;font-family:inherit;outline:none;appearance:none;-webkit-appearance:none;}
+  .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A94A0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+  .field select option{background:var(--bg2);color:var(--ink);}
+  .field input:focus,.field select:focus{border-color:var(--line2);}
+  .field textarea{width:100%;min-height:86px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);color:var(--ink);font-size:14px;padding:12px 14px;font-family:inherit;outline:none;resize:none;}
+  .field textarea:focus{border-color:var(--line2);}
+  .f-hint{font-size:11.5px;color:var(--accent);margin-top:6px;line-height:1.6;}
+  .check{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--ink-dim);line-height:1.6;cursor:pointer;}
+  .check input{width:18px;height:18px;flex:none;margin-top:2px;accent-color:var(--accent);}
+  .check a{color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
+
+  /* ===== 成功页 ===== */
+  .success{text-align:center;padding-top:40px;}
+  .ring{width:74px;height:74px;margin:0 auto 18px;border-radius:50%;background:rgba(82,196,26,.1);border:1px solid rgba(82,196,26,.35);display:flex;align-items:center;justify-content:center;color:var(--ok);box-shadow:0 0 34px rgba(82,196,26,.18);}
+  .success h2{font-size:23px;font-weight:900;}
+  .success .p{font-size:13.5px;color:var(--ink-dim);margin-top:6px;}
+  .ticket{margin:22px 0;background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;text-align:left;}
+  .ticket .row{display:flex;justify-content:space-between;gap:14px;padding:13px 16px;font-size:13.5px;}
+  .ticket .row + .row{border-top:1px solid var(--line);}
+  .ticket .row span{color:var(--ink-dim);}
+  .ticket .row b{font-weight:600;text-align:right;word-break:break-all;}
+  .ticket .row .ok{color:var(--ok);font-weight:700;}
+  .acts{display:grid;gap:10px;}
+
+  /* ===== 订单列表 ===== */
+  .orders .od{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 15px;margin-bottom:9px;}
+  .od .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+  .od .st{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
+  .od .st.pending{background:rgba(245,184,90,.12);color:var(--warn);border:1px solid rgba(245,184,90,.3);}
+  .od .st.doing{background:rgba(79,198,232,.1);color:var(--accent);border:1px solid var(--line2);}
+  .od .st.done{background:rgba(82,196,26,.1);color:var(--ok);border:1px solid rgba(82,196,26,.3);}
+  .od .no{font-size:11px;color:var(--ink-faint);font-family:ui-monospace,Menlo,monospace;}
+  .od .t{font-size:15px;font-weight:800;}
+  .od .s{font-size:12px;color:var(--ink-dim);margin-top:2px;}
+  .od .foot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);}
+  .od .foot b{font-size:15.5px;color:var(--accent);}
+  .od .foot .tm{font-size:11.5px;color:var(--ink-faint);}
+  .empty{text-align:center;padding:56px 20px;color:var(--ink-dim);}
+  .empty .em{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-faint);}
+  .empty p{font-size:13.5px;margin-bottom:18px;}
+
+  /* ===== 打手板块 ===== */
+  .p-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 12px;}
+  .p-toolbar .pt-sub{font-size:12.5px;color:var(--ink-dim);}
+  .p-card{display:flex;gap:13px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px 14px;margin-bottom:10px;transition:opacity .2s ease,filter .2s ease;position:relative;overflow:hidden;}
+  .p-card:hover{filter:brightness(1.05);}
+  .p-card:active{opacity:.85;filter:brightness(.98);}
+  .p-ava{flex:none;width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,rgba(79,198,232,.22),rgba(79,198,232,.08));border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--accent);letter-spacing:.02em;}
+  .p-main{flex:1;min-width:0;}
+  .p-name{display:flex;align-items:center;gap:7px;font-size:15.5px;font-weight:800;}
+  .p-tier{font-size:10px;font-weight:700;color:#07131A;background:var(--accent);border-radius:5px;padding:2px 7px;letter-spacing:.04em;}
+  .p-tier.xin{background:var(--line2);color:var(--ink);}
+  .p-intro{font-size:12px;color:var(--ink-dim);margin-top:4px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .p-meta{display:flex;align-items:center;gap:10px;margin-top:7px;flex-wrap:wrap;}
+  .p-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:1px;}
+  .p-dot.on{background:var(--ok);box-shadow:0 0 6px rgba(82,196,26,.8);}
+  .p-dot.off{background:#5A6470;}
+  .p-stat{font-size:11px;color:var(--ink-dim);display:inline-flex;align-items:center;}
+  .p-stat b{color:var(--ink);font-weight:700;margin:0 2px;}
+  .p-end{font-size:11px;color:var(--ink-dim);}
+  .p-btn{flex:none;align-self:center;min-height:42px;padding:0 16px;border-radius:11px;font-size:13px;font-weight:700;border:1px solid var(--line2);color:var(--accent);background:rgba(79,198,232,.07);transition:opacity .2s ease,filter .2s ease;}
+  .p-btn:hover{filter:brightness(1.1);}
+  .p-btn:active{opacity:.8;}
+  .p-btn[disabled]{opacity:.4;pointer-events:none;color:var(--ink-faint);background:transparent;border-color:var(--line);}
+  .p-toggle{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:9px;}
+  .p-toggle .ptt{font-size:11.5px;color:var(--ink-dim);}
+  .p-toggle button{min-height:32px;padding:0 12px;border-radius:9px;font-size:11.5px;font-weight:700;border:1px solid var(--line);color:var(--ink-dim);transition:opacity .2s ease,filter .2s ease;}
+  .p-toggle button:hover{filter:brightness(1.15);}
+  .p-toggle button:active{opacity:.75;}
+  .p-hint{font-size:11.5px;color:var(--ink-faint);line-height:1.7;margin-top:14px;text-align:center;}
+  .p-online{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ok);font-weight:600;}
+  .p-offline{color:var(--ink-dim);font-weight:500;}
+  .p-join-card{background:linear-gradient(135deg,rgba(79,198,232,.1),rgba(79,198,232,.02));border:1px dashed var(--line2);border-radius:16px;padding:18px 16px;margin-bottom:10px;transition:opacity .2s ease,filter .2s ease;}
+  .p-join-card:hover{filter:brightness(1.05);}
+  .p-join-card:active{opacity:.85;}
+  .p-join-t{font-size:15px;font-weight:800;}
+  .p-join-d{font-size:12.5px;color:var(--ink-dim);margin-top:5px;line-height:1.7;}
+  .p-join-btn{margin-top:13px;width:100%;}
+  .p-form-t{font-size:14px;font-weight:800;margin-bottom:2px;}
+  .p-form-d{font-size:12px;color:var(--ink-dim);margin-bottom:10px;line-height:1.65;}
+
+  /* ===== 条款页 ===== */
+  .terms h2{font-size:21px;font-weight:900;margin:6px 0 4px;}
+  .terms .updated{font-size:11.5px;color:var(--ink-faint);}
+  .t-block{margin-top:20px;}
+  .t-block h3{font-size:15.5px;font-weight:800;display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+  .t-block h3 .n{width:22px;height:22px;flex:none;border-radius:7px;background:rgba(79,198,232,.12);border:1px solid var(--line2);color:var(--accent);font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .t-block p,.t-block li{font-size:13px;color:var(--ink-dim);line-height:1.85;}
+  .t-block ul{padding-left:4px;list-style:none;}
+  .t-block li{padding-left:16px;position:relative;margin-bottom:7px;}
+  .t-block li::before{content:'';position:absolute;left:2px;top:10px;width:5px;height:5px;border-radius:50%;background:var(--line2);}
+  .t-block li b{color:var(--ink);font-weight:600;}
+  .t-block .hl{background:rgba(245,184,90,.06);border:1px solid rgba(245,184,90,.25);border-radius:12px;padding:11px 13px;font-size:12.5px;color:#CBB893;line-height:1.7;margin-top:8px;}
+
+  /* ===== Cookie 条（弹层：350ms 淡入淡出） ===== */
+  .cookie{position:fixed;left:12px;right:12px;bottom:12px;z-index:90;max-width:536px;margin:0 auto;background:rgba(18,24,33,.96);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:16px;padding:15px 16px;box-shadow:0 12px 40px rgba(0,0,0,.5);display:flex;gap:13px;align-items:flex-start;opacity:0;transform:translateY(8px);transition:opacity .35s ease,transform .35s ease;}
+  .cookie.show{opacity:1;transform:none;}
+  .cookie .ct{flex:1;min-width:0;font-size:12px;color:var(--ink-dim);line-height:1.65;}
+  .cookie .ct b{color:var(--ink);}
+  .cookie .ca{display:flex;gap:8px;flex:none;}
+  .cookie .ca button{min-height:38px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:700;}
+  .cookie .ok-btn{background:var(--accent);color:#07131A;}
+  .cookie .no-btn{border:1px solid var(--line);color:var(--ink-dim);}
+  .cookie.hide{display:none;}
+
+  /* ===== 滚动渐显（统一 600ms / ease-out / 12px） ===== */
+  .reveal{opacity:0;transform:translateY(12px);transition:opacity .6s ease-out,transform .6s ease-out;}
+  .reveal.in{opacity:1;transform:none;}
+  /* 区块内错峰入场：图片(或图标)先出现 0ms，标题 +120ms，正文再 +80ms。
+     用 animation 实现，避免污染交互元素的 hover transition。 */
+  .reveal [data-stag]{opacity:0;}
+  .reveal.in [data-stag]{animation:stagIn .6s ease-out forwards;}
+  .reveal.in [data-stag="img"]{animation-delay:0ms;}
+  .reveal.in [data-stag="title"]{animation-delay:.12s;}
+  .reveal.in [data-stag="body"]{animation-delay:.2s;}
+  @keyframes stagIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+
+  .foot{padding:26px 20px 34px;text-align:center;color:var(--ink-faint);font-size:11.5px;line-height:2;border-top:1px solid var(--line);}
+  .foot .flinks{display:flex;justify-content:center;gap:18px;margin-bottom:6px;}
+  .foot a{color:var(--ink-dim);transition:opacity .2s ease;}
+  .foot a:hover{opacity:.7;}
+  .foot a:active{opacity:.5;color:var(--accent);}
+
+  /* ===== 系统减弱动画适配：关闭所有非必要动效 ===== */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation:none !important;transition:none !important;scroll-behavior:auto !important;}
+    .reveal,.reveal [data-stag],.hero-bg,.hero-tag,.hero h1,.hero p,.hero-cta,.cookie{opacity:1 !important;transform:none !important;}
+  }
+
+  @media (min-width:481px){
+    .shell{border-left:1px solid var(--line);border-right:1px solid var(--line);}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ===== 顶栏 ===== -->
+  <header class="topbar">
+    <div class="topbar-in">
+      <button class="back" id="btnBack" style="display:none" aria-label="返回">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="brand">
+        <span class="logo">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#07131A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+        </span>
+        学航护航站<small>XUEHANG</small>
+      </div>
+      <div class="spacer"></div>
+      <button class="back" id="btnOrders" aria-label="我的订单">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12l2 4v16H4V6l2-4z"/><path d="M4 6h16"/><path d="M9 10h6"/><path d="M9 14h6"/></svg>
+        <span id="orderDot" style="display:none;position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--warn);"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== 首页 ===== -->
+  <section data-route="home">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-in">
+        <span class="hero-tag"><span class="dot"></span>大学生认证 · 纯绿手搓</span>
+        <h1>同学护航，<em>保底到底</em></h1>
+        <p>打手全部是学信网认证的在读大学生。不代打上号、不碰外挂，炸单补时、换人、免单——每一单都有人兜底。</p>
+        <div class="hero-cta">
+          <button class="btn btn-primary" data-nav="menu" data-tab="hut" data-end="mobile">立即点单</button>
+          <button class="btn btn-ghost" data-nav="menu" data-tab="play" data-end="mobile">技术陪玩</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head" data-stag="title"><span class="kicker">Why us</span></div>
+      <h2 class="title" data-stag="title">为什么选学航</h2>
+      <div class="trust-grid" style="margin-top:14px;" data-stag="body">
+        <div class="trust-card">
+          <div class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3.6 8-10V5l-8-3-8 3v7c0 6.4 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <div class="t">学信网认证</div>
+          <div class="d">打手实名在校学生，入店审核学籍</div>
+        </div>
+        <div class="trust-card">
+          <div class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M17 7l1.4-1.4M5.6 18.4L7 17"/><circle cx="12" cy="12" r="3.5"/></svg></div>
+          <div class="t">纯绿手搓</div>
+          <div class="d">不代打上号、不碰外挂脚本科技车</div>
+        </div>
+        <div class="trust-card">
+          <div class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <div class="t">炸单兜底</div>
+          <div class="d">补时 → 换人 → 免单，损失店方扛</div>
+        </div>
+        <div class="trust-card">
+          <div class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/><path d="M9 10h.01M15 10h.01M8.5 14.5c.8 1 2 1.6 3.5 1.6s2.7-.6 3.5-1.6"/></svg></div>
+          <div class="t">学生兼职价</div>
+          <div class="d">打手是同学，价格让学生花得起</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="sec">
+      <div class="sec-head" data-stag="title"><span class="kicker">Services</span></div>
+      <h2 class="title" data-stag="title">选一种服务</h2>
+      <div style="margin-top:14px;" data-stag="body">
+        <a class="svc-card" data-nav="menu" data-tab="hut" data-end="mobile">
+          <span class="svc-ico hut"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <span class="svc-main">
+            <span class="t">护航保底单</span>
+            <span class="d">约定仓库净增哈夫币，达标结单</span>
+          </span>
+          <span class="svc-price"><b>¥30起</b><span>手游 · 单</span></span>
+          <span class="svc-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </a>
+        <a class="svc-card" data-nav="menu" data-tab="play" data-end="mobile">
+          <span class="svc-ico play"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18M18 3v18M6 7h12M6 13h12"/><path d="M3 7h3M3 13h3M18 7h3M18 13h3"/></svg></span>
+          <span class="svc-main">
+            <span class="t">技术陪玩</span>
+            <span class="d">教学、报点、上分，按小时约</span>
+          </span>
+          <span class="svc-price"><b>¥25起</b><span>手游 · 小时</span></span>
+          <span class="svc-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </a>
+        <a class="svc-card" data-nav="menu" data-tab="trial" data-end="mobile">
+          <span class="svc-ico trial"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg></span>
+          <span class="svc-main">
+            <span class="t">体验引流单</span>
+            <span class="d">首单限 1 次，一杯奶茶钱试试</span>
+          </span>
+          <span class="svc-price"><b>¥9.9</b><span>手游 · 首单</span></span>
+          <span class="svc-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </a>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="sec">
+      <div class="sec-head" data-stag="title"><span class="kicker">Choose a mate</span></div>
+      <h2 class="title" data-stag="title">指定你的打手</h2>
+      <div class="p-join-card" style="margin-top:14px;" data-stag="body">
+        <div class="p-join-t">打手大厅</div>
+        <div class="p-join-d">想指定某位打手护航 / 陪玩？进大厅看段位、累计单量与营业状态，直接点名下单。</div>
+        <button class="btn btn-primary p-join-btn" data-nav="players">进打手大厅</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="sec">
+      <div class="sec-head" data-stag="title"><span class="kicker">Guarantee</span></div>
+      <h2 class="title" data-stag="title">炸单了怎么办</h2>
+      <div class="sure" style="margin-top:14px;" data-stag="body">
+        <div class="sure-steps">
+          <div class="sure-step">
+            <span class="step-no">1</span>
+            <div>
+              <div class="tt">补时</div>
+              <div class="dd">本局未达保底，<b>下一局不计费</b>继续打，直到保底金额达标。</div>
+            </div>
+          </div>
+          <div class="sure-step">
+            <span class="step-no">2</span>
+            <div>
+              <div class="tt">换人</div>
+              <div class="dd">打手状态差 / 临时失联，店方<b>安排同档位打手接续</b>，不中断、不加价。</div>
+            </div>
+          </div>
+          <div class="sure-step">
+            <span class="step-no danger">3</span>
+            <div>
+              <div class="tt">免单</div>
+              <div class="dd">真炸单且无人可换，<b>全额退款</b>并送下次 85 折券，损失由店方保障池承担。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="sec">
+      <div class="sec-head" data-stag="title"><span class="kicker">Your teammate</span></div>
+      <h2 class="title" data-stag="title">你的打手，是同学</h2>
+      <div class="player" style="margin-top:14px;">
+        <img src="https://aka.doubaocdn.com/s/oYyx84EW1u" alt="大学生打手插画" data-stag="img">
+        <div data-stag="body">
+          <div class="t" data-stag="title">学信网认证在读大学生</div>
+          <div class="d">课余接单，赚点生活费。<b>有学籍做背书</b>，不敢乱来，也乱不了来——身份可追溯，服务对得起同学。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec" style="padding-top:0;" data-stag="body">
+      <div class="notice">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <div>护航 / 陪玩为人工服务，不属于游戏官方产品。请下单前阅读<a href="#" data-nav="terms" style="color:var(--accent);text-decoration:underline;text-underline-offset:3px;">服务条款与风险提示</a>。</div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <div class="flinks">
+        <a href="#" data-nav="players">打手大厅</a>
+        <a href="#" data-nav="terms">服务条款</a>
+        <a href="#" data-nav="terms">隐私说明</a>
+        <a href="#" data-nav="orders">我的订单</a>
+      </div>
+      学航护航站 · 大学生护航陪玩平台<br>人工服务有风险，下单即视为已阅读并同意服务条款
+    </div>
+  </section>
+
+  <!-- ===== 点单页 ===== -->
+  <section data-route="menu">
+    <div class="pad">
+      <div class="menu-head">
+        <h2 id="menuTitle">护航保底单</h2>
+        <span class="sub" id="menuSub"></span>
+      </div>
+      <p class="tip" id="menuTip" style="margin:2px 0 0;"></p>
+
+      <div class="seg" id="endSeg">
+        <button data-end="mobile">手游端</button>
+        <button data-end="pc">PC 端</button>
+      </div>
+      <div class="tabs" id="svcTabs">
+        <button data-tab="hut">护航保底</button>
+        <button data-tab="play">技术陪玩</button>
+        <button data-tab="trial">体验单</button>
+      </div>
+
+      <div id="plans"></div>
+    </div>
+  </section>
+
+  <!-- ===== 打手大厅 ===== -->
+  <section data-route="players">
+    <div class="pad">
+      <div class="menu-head">
+        <h2>打手大厅</h2>
+        <span class="sub">学信网认证 · 营业中优先</span>
+      </div>
+      <div class="p-toolbar">
+        <span class="pt-sub" id="pSub">加载中</span>
+        <button class="btn btn-ghost" id="btnJoin" style="min-height:36px;padding:0 14px;font-size:12.5px;">打手入驻</button>
+      </div>
+      <div id="playersList" style="margin-top:2px;"></div>
+      <p class="p-hint">「累计单量」为店内已完成订单计数（演示版含模拟底数）；营业状态由打手 / 店主维护。正式运营版将接入店方打手库与订单系统实时同步。</p>
+    </div>
+  </section>
+
+  <!-- ===== 打手入驻 ===== -->
+  <section data-route="join">
+    <div class="pad">
+      <div class="menu-head">
+        <h2>打手入驻</h2>
+        <span class="sub">学信网认证在校生 · 店方审核</span>
+      </div>
+
+      <div class="form-card" style="margin-top:8px;">
+        <div class="p-form-t">填写你的资料</div>
+        <div class="p-form-d">提交后先保存在本机演示库，店方审核通过后正式上架大厅。</div>
+        <div class="field">
+          <label>打手昵称<em>*</em></label>
+          <input id="pjName" type="text" placeholder="顾客会看到的名字，如：阿泽" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>主打段位<em>*</em></label>
+          <select id="pjTier">
+            <option value="大神">大神</option>
+            <option value="精英">精英</option>
+            <option value="新秀">新秀</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>擅长端<em>*</em></label>
+          <select id="pjEnd">
+            <option value="手游">手游</option>
+            <option value="PC 端">PC 端</option>
+            <option value="手游 + PC 端">手游 + PC 端</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>一句话简介<em>*</em></label>
+          <textarea id="pjIntro" placeholder="如：三角洲护航 800+ 小时，报点耐心，稳的一批"></textarea>
+        </div>
+        <label class="check" style="margin-top:2px;">
+          <input type="checkbox" id="pjAgree">
+          <span>我已阅读并同意<a href="#" id="pjRule">服务条款与打手守则</a>，承诺纯绿手搓、不碰外挂，接受店方审核与抽查。</span>
+        </label>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="btnJoinSubmit" style="margin-top:18px;">提交入驻申请</button>
+      <button class="btn btn-ghost btn-block" id="btnBackPlayers" style="margin-top:10px;">返回打手大厅</button>
+    </div>
+  </section>
+
+  <!-- ===== 底部下单条 ===== -->
+  <div class="order-bar" id="orderBar" style="display:none;">
+    <div class="order-bar-in">
+      <div class="sum">
+        <div class="t" id="sumT">请先选择服务</div>
+        <div class="p" id="sumP">¥0 <small>实付</small></div>
+      </div>
+      <button class="btn btn-primary" id="btnToOrder" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- ===== 下单表单 ===== -->
+  <section data-route="order">
+    <div class="pad">
+      <div class="menu-head">
+        <h2>确认订单</h2>
+        <span class="sub" id="oUnit"></span>
+      </div>
+
+      <div class="form-card" style="margin-top:8px;">
+        <div class="f-title">所选服务</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15.5px;font-weight:800;" id="oName"></div>
+            <div style="font-size:12px;color:var(--ink-dim);margin-top:2px;" id="oDesc"></div>
+          </div>
+          <div style="text-align:right;flex:none;">
+            <div style="font-size:20px;font-weight:900;color:var(--accent);" id="oPrice"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="f-title">填写信息</div>
+        <div class="field">
+          <label>游戏角色 ID<em>*</em></label>
+          <input id="fId" type="text" placeholder="请填写游戏内角色 ID" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>所在区服<em>*</em></label>
+          <select id="fServer">
+            <option value="default">请选择区服</option>
+            <option value="qq">QQ 区</option>
+            <option value="wx">微信区</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>指定打手</label>
+          <select id="fPlayer">
+            <option value="">店方派单（推荐）</option>
+          </select>
+          <div class="f-hint" id="fPlayerHint" style="display:none;"></div>
+        </div>
+        <div class="field">
+          <label>联系方式<em>*</em></label>
+          <input id="fContact" type="text" placeholder="QQ / 微信 / 手机号，用于打手联系" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>备注</label>
+          <textarea id="fNote" placeholder="如：在线时段、希望沟通的方式、特殊要求等（选填）"></textarea>
+        </div>
+        <label class="check" style="margin-top:2px;">
+          <input type="checkbox" id="fAgree">
+          <span>我已阅读并同意<a href="#" id="fRule">服务条款与风险提示</a>，知悉护航为人工服务、游戏官方禁止账号代练，自愿承担相关风险。</span>
+        </label>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="btnSubmit" style="margin-top:18px;">提交订单</button>
+      <button class="btn btn-ghost btn-block" id="btnBackMenu" style="margin-top:10px;">返回重选</button>
+    </div>
+  </section>
+
+  <!-- ===== 成功页 ===== -->
+  <section data-route="success">
+    <div class="pad">
+      <div class="success">
+        <div class="ring">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <h2>下单成功</h2>
+        <p class="p">打手将尽快接单，请保持联系方式畅通</p>
+        <div class="ticket" id="ticket"></div>
+        <div class="acts">
+          <button class="btn btn-primary" data-nav="orders">查看我的订单</button>
+          <button class="btn btn-ghost" data-nav="home">返回首页</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 我的订单 ===== -->
+  <section data-route="orders">
+    <div class="pad">
+      <div class="menu-head">
+        <h2>我的订单</h2>
+        <span class="sub" id="ordersSub"></span>
+      </div>
+      <div class="orders" id="ordersList" style="margin-top:14px;"></div>
+    </div>
+  </section>
+
+  <!-- ===== 服务条款 ===== -->
+  <section data-route="terms">
+    <div class="pad terms">
+      <span class="kicker">Terms &amp; Risk</span>
+      <h2>服务条款与风险提示</h2>
+      <p class="updated">学航护航站 · 最后更新 2026-09-18</p>
+
+      <div class="t-block">
+        <h3><span class="n">1</span>服务性质声明</h3>
+        <ul>
+          <li>本平台提供的是<b>人工游戏护航、技术陪玩服务</b>，非游戏官方产品，与任何游戏官方均无合作关系。</li>
+          <li>主流游戏《用户许可及服务协议》均明确禁止将游戏账号以任何方式提供给他人作商业性使用（含代练、代打），并可能对违规账号采取<b>封停、数据回退、追缴违规收益</b>等措施 <span style="color:var(--ink-faint);">（参考：腾讯游戏许可及服务协议相关条款）</span>。</li>
+          <li>您选择下单，即代表已知晓上述官方规则，并<b>自愿承担因使用护航 / 陪玩服务可能产生的账号风险</b>。</li>
+        </ul>
+        <div class="hl">风险提示：司法实践普遍认定，玩家在明知官方禁止代练的情况下仍将账号交由他人使用，对由此产生的风险与损失存在过错。下单前请务必确认你接受这一前提。</div>
+      </div>
+
+      <div class="t-block">
+        <h3><span class="n">2</span>账号与信息安全</h3>
+        <ul>
+          <li>本店服务全程<b>不需要您的账号密码</b>：护航为同局组队陪同，打手不登号、不代打上号。</li>
+          <li>任何情况下，<b>都不要把账号密码、验证码、动态口令提供给打手或任何第三方</b>。索要密码的一律视为诈骗，请立即停止并联系店方。</li>
+          <li>您应妥善保管账号、密码及设备登录权限；因自行泄露、主动出借账号、设备被盗或自行操作失误导致的损失，由您自行承担。</li>
+          <li>下单填写的联系方式仅用于<b>本次订单的履约联系</b>，服务结束后不再留存使用；平台不会将您的信息用于其他用途。</li>
+        </ul>
+      </div>
+
+      <div class="t-block">
+        <h3><span class="n">3</span>炸单与赔偿规则</h3>
+        <ul>
+          <li><b>炸单定义</b>：约定保底金额未在服务期限内达成。</li>
+          <li><b>打手全责炸单</b>：按「补时 → 换人 → 免单」三级处理——先免费补打，无人可换则全额退款并赠送下次 85 折券。</li>
+          <li><b>顾客原因导致的未达标</b>（不听指挥、故意送人头、挂机、中途掉线且长时间失联等），视为服务完成或按约定结算，<b>不适用免单</b>。</li>
+          <li><b>赔偿上限</b>：店方的赔偿责任以<b>本笔订单实付金额为上限</b>，不承担账号内虚拟财产损失、封号间接损失等超出订单金额的索赔。</li>
+          <li>因游戏官方检测、网络波动、服务器维护等<b>非店方可控原因</b>导致的未达标或账号异常，不视为店方违约。</li>
+        </ul>
+      </div>
+
+      <div class="t-block">
+        <h3><span class="n">4</span>服务红线</h3>
+        <ul>
+          <li>纯绿手搓：<b>不代打上号、不提供账号密码、不碰外挂 / 脚本 / 科技车</b>。</li>
+          <li>打手使用任何违规外挂或科技手段，一经查实立即清退，并对受影响订单按免单规则处理。</li>
+          <li>若您发现打手索要账号密码或使用异常手段，请立即停止服务并联系店方处理。</li>
+        </ul>
+      </div>
+
+      <div class="t-block">
+        <h3><span class="n">5</span>订单与售后</h3>
+        <ul>
+          <li>提交订单即视为同意本条款；订单提交后如信息填错，请尽快联系店方更正。</li>
+          <li>订单状态可在「我的订单」中查看；展示版页面中订单保存在本机浏览器，正式运营版将接入店方订单系统。</li>
+          <li>售后争议以订单记录与双方沟通记录为准，请保留订单号以便核对。</li>
+        </ul>
+      </div>
+
+      <div class="notice" style="margin-top:22px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <div>本页面所有条款与规则为店方制定的服务约定，仅供参考与沟通使用，不构成法律意见。具体纠纷以双方协商及实际订单记录为准。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Cookie 提示 ===== -->
+  <div class="cookie" id="cookieBar">
+    <div class="ct">
+      <b>关于 Cookie 与隐私</b><br>
+      本页面使用本地存储记录你的订单与偏好，仅保存在你的设备上，不上传服务器。继续使用即表示同意。
+    </div>
+    <div class="ca">
+      <button class="no-btn" id="cookieNo">仅本次</button>
+      <button class="ok-btn" id="cookieOk">知道了</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ===== 价目（与飞书《陪玩店价格表》一致，顾客端价格[阈值·分析设定]） ===== */
+  var PRICE = {
+    hut: {
+      mobile: [
+        {id:'hm400', tier:'400万', price:30, lv:'精英', desc:'新秀体验 · 单局内完成', tag:''},
+        {id:'hm688', tier:'688万', price:55, lv:'精英', desc:'主流档位 · 1-2局', tag:'hot'},
+        {id:'hm888', tier:'888万', price:70, lv:'精英', desc:'进阶档位', tag:''},
+        {id:'hm1000', tier:'1000万', price:85, lv:'大神', desc:'高保底 · 大神打手', tag:''},
+        {id:'hm1288', tier:'1288万', price:100, lv:'大神', desc:'旗舰档位', tag:''}
+      ],
+      pc: [
+        {id:'hp400', tier:'400万', price:45, lv:'精英', desc:'新秀体验 · 单局内完成', tag:''},
+        {id:'hp688', tier:'688万', price:75, lv:'精英', desc:'主流档位 · 1-2局', tag:'hot'},
+        {id:'hp888', tier:'888万', price:90, lv:'精英', desc:'进阶档位', tag:''},
+        {id:'hp1000', tier:'1000万', price:105, lv:'大神', desc:'高保底 · 大神打手', tag:''},
+        {id:'hp1288', tier:'1288万', price:125, lv:'大神', desc:'旗舰档位', tag:''}
+      ]
+    },
+    play: {
+      mobile: [
+        {id:'pm1', tier:'新秀', price:25, lv:'新秀', desc:'基础教学 · 报点陪练', tag:''},
+        {id:'pm2', tier:'精英', price:40, lv:'精英', desc:'分段教学 · 稳定上分', tag:'hot'},
+        {id:'pm3', tier:'大神', price:55, lv:'大神', desc:'高段位陪练 · 战术复盘', tag:''}
+      ],
+      pc: [
+        {id:'pp1', tier:'新秀', price:35, lv:'新秀', desc:'基础教学 · 报点陪练', tag:''},
+        {id:'pp2', tier:'精英', price:50, lv:'精英', desc:'分段教学 · 稳定上分', tag:'hot'},
+        {id:'pp3', tier:'大神', price:70, lv:'大神', desc:'高段位陪练 · 战术复盘', tag:''}
+      ]
+    },
+    trial: {
+      mobile: {id:'tm1', tier:'100万', price:9.9, lv:'新秀', desc:'首单限1次 · 店方补贴', tag:'new'},
+      pc: {id:'tp1', tier:'100万', price:15.9, lv:'新秀', desc:'首单限1次 · 店方补贴', tag:'new'}
+    }
+  };
+
+  var TAB_META = {
+    hut:  {name:'护航保底单', unit:'元/单', tip:'按仓库净增哈夫币结算，达到保底即结单。'},
+    play: {name:'技术陪玩',   unit:'元/小时', tip:'按小时计费，自由约时段。'},
+    trial:{name:'体验引流单', unit:'元/单', tip:'首单限 1 次，先花一杯奶茶钱试试。'}
+  };
+  var END_NAME = {mobile:'手游', pc:'PC 端'};
+  var SERVER_NAME = {qq:'QQ 区', wx:'微信区'};
+
+  /* ===== 状态 ===== */
+  var state = {
+    route: 'home',
+    end: 'mobile',
+    tab: 'hut',
+    sel: null,
+    order: null,
+    selPlayer: null
+  };
+
+  function getOrders(){ try{ return JSON.parse(localStorage.getItem('hh_orders')||'[]'); }catch(e){ return []; } }
+  function setOrders(list){ localStorage.setItem('hh_orders', JSON.stringify(list)); }
+
+  /* ===== 企微订单同步 =====
+     顾客下单后，把订单盲发到店主企业微信的「订单台账」智能表格（接收外部数据 Webhook）。
+     企微 Webhook 不允许浏览器跨域读取响应，故采用 no-cors 盲发 + text/plain 简单请求：
+     请求必达，但网页无法确认写入结果；订单仍完整保存在本机，不会因此丢失。
+     说明：Webhook 地址含写入密钥，正式运营建议改为轻后端中转（密钥只放服务端）。 */
+  var WECOM_WEBHOOK_URL = 'https://qyapi.weixin.qq.com/cgi-bin/wedoc/smartsheet/webhook?key=1G5Bb6tdScfBBnfOUHIrJcJW2Gl3WBvfwyYtp0eSoKVrV2kG4vTIJd5tpxGuiuWfgMjTkk5SgwGDlkbkGlSmmCOG3tkmno3hklbYf6lxEkfK';
+  function syncOrderToWecom(rec){
+    try{
+      var payload = { add_records: [{ values: {
+        fb7c7f: String(rec.no||''),                         /* 订单号 */
+        f7aa09: String(rec.name||''),                       /* 服务 */
+        f83c65: [{text: rec.end==='pc' ? 'PC端' : '手游'}], /* 端 */
+        f2203e: [{text: rec.server==='QQ 区' ? 'QQ区' : (rec.server||'')}], /* 区服（与表格选项对齐） */
+        f96cf2: String(rec.playerName||''),                 /* 指定打手 */
+        f6477a: Number(rec.price)||0,                       /* 金额 */
+        f79e6d: [{text:'待接单'}],                          /* 状态 */
+        fece59: String(rec.contact||''),                    /* 联系方式 */
+        fd9887: String(rec.note||'')                        /* 备注 */
+      }}]};
+      fetch(WECOM_WEBHOOK_URL, {
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify(payload)
+      }).catch(function(){});
+    }catch(e){}
+  }
+
+  /* ===== 打手数据层 =====
+     演示版：数据存 localStorage（本机）。正式运营版接入企微表格 / 店方后端时，
+     只需替换 getPlayers / setPlayers 两个函数，其余页面逻辑不变。 */
+  var PLAYERS_SEED = [
+    {id:'pl-01', name:'阿泽',  tier:'大神', end:'手游 + PC 端', intro:'三角洲护航 800+ 小时，报点耐心，稳的一批', games:186, on:true},
+    {id:'pl-02', name:'夜航',  tier:'大神', end:'手游', intro:'千场保底 0 炸单记录，全程语音沟通，心态极好', games:142, on:true},
+    {id:'pl-03', name:'陈皮',  tier:'精英', end:'PC 端', intro:'主玩教学带练，会复盘会讲思路，适合新手入门', games:97,  on:true},
+    {id:'pl-04', name:'老六',  tier:'精英', end:'手游', intro:'专注高倍率打法，手快话少，冲分可点', games:64,  on:false},
+    {id:'pl-05', name:'小北',  tier:'新秀', end:'手游 + PC 端', intro:'新晋打手，价格更友好，带你熟悉机制', games:12,  on:true}
+  ];
+  function getPlayers(){
+    try{
+      var raw = localStorage.getItem('hh_players');
+      if(raw){ var list = JSON.parse(raw); if(list && list.length) return list; }
+    }catch(e){}
+    return PLAYERS_SEED.slice();
+  }
+  function setPlayers(list){ try{ localStorage.setItem('hh_players', JSON.stringify(list)); }catch(e){} }
+  function savePlayer(p){
+    var list = getPlayers();
+    var hit = null;
+    for(var i=0;i<list.length;i++) if(list[i].id===p.id) hit = list[i];
+    if(hit){ for(var k in p) hit[k]=p[k]; } else { list.unshift(p); }
+    setPlayers(list);
+    return list;
+  }
+  function findPlayer(id){
+    var list = getPlayers();
+    for(var i=0;i<list.length;i++) if(list[i].id===id) return list[i];
+    return null;
+  }
+  /* 打手累计单量 = 演示底数 + 本机订单中指定该打手且已接单/完成的单数 */
+  function playerGames(p){
+    var n = p.games || 0;
+    try{
+      var os = JSON.parse(localStorage.getItem('hh_orders')||'[]');
+      os.forEach(function(o){
+        if(o.playerId===p.id && (o.status==='doing'||o.status==='done')) n++;
+      });
+    }catch(e){}
+    return n;
+  }
+  function onlineCount(){ return getPlayers().filter(function(p){ return p.on; }).length; }
+
+  /* ===== 工具 ===== */
+  function $(s, p){ return (p||document).querySelector(s); }
+  function $$(s, p){ return Array.prototype.slice.call((p||document).querySelectorAll(s)); }
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function money(n){ return (Math.round(n*100)/100).toFixed(n%1?1:0); }
+  function genNo(){
+    var d = new Date();
+    function p(n){ return (n<10?'0':'')+n; }
+    return 'XH' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+  function nowStr(){
+    var d = new Date();
+    function p(n){ return (n<10?'0':'')+n; }
+    return p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+  }
+
+  /* ===== 服务查找 ===== */
+  function listOf(tab, end){
+    if(tab==='trial') return [PRICE.trial[end]];
+    return PRICE[tab][end];
+  }
+  function findSvc(id){
+    var tabs=['hut','play','trial'], ends=['mobile','pc'], i, j;
+    for(i=0;i<tabs.length;i++) for(j=0;j<ends.length;j++){
+      var l = listOf(tabs[i], ends[j]);
+      for(var k=0;k<l.length;k++) if(l[k].id===id) return {tab:tabs[i], end:ends[j], svc:l[k]};
+    }
+    return null;
+  }
+
+  /* ===== 路由 ===== */
+  function parseHash(){
+    var h = location.hash || '#/home';
+    var parts = h.replace(/^#\/?/,'').split('?');
+    var route = parts[0] || 'home';
+    var q = {};
+    if(parts[1]) parts[1].split('&').forEach(function(kv){
+      var sp = kv.split('='); q[decodeURIComponent(sp[0])] = decodeURIComponent(sp[1]||'');
+    });
+    return {route:route, q:q};
+  }
+  function nav(route, q){
+    var h = '#/' + route;
+    if(q){ var keys=Object.keys(q); if(keys.length){ h += '?' + keys.map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(q[k]);}).join('&'); } }
+    if(location.hash === h){ render(); } else { location.hash = h; }
+  }
+  window.addEventListener('hashchange', render);
+
+  /* 全局事件委托 */
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('[data-nav]');
+    if(!el) return;
+    e.preventDefault();
+    var r = el.getAttribute('data-nav');
+    if(r==='menu'){
+      if(el.hasAttribute('data-tab')) state.tab = el.getAttribute('data-tab');
+      if(el.hasAttribute('data-end')) state.end = el.getAttribute('data-end');
+      state.sel = null;
+      if(!el.hasAttribute('data-keep')) state.selPlayer = null;
+      nav('menu');
+    } else {
+      nav(r);
+    }
+  });
+
+  /* 返回按钮 */
+  var BACK_TARGET = {
+    menu:    'home',
+    order:   'menu',
+    success: 'orders',
+    orders:  'home',
+    terms:   'home',
+    players: 'home',
+    join:    'players'
+  };
+  $('#btnBack').onclick = function(){ nav(BACK_TARGET[state.route] || 'home'); };
+  $('#btnOrders').onclick = function(){ nav('orders'); };
+
+  /* ===== 动效：滚动视差（强度 6%，桌面端启用，移动端与减弱动画完全禁用） ===== */
+  var mqDesktop = window.matchMedia('(min-width: 768px)');
+  var mqReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var heroBg = document.querySelector('.hero-bg');
+  var rafPending = false;
+  function updateParallax(){
+    rafPending = false;
+    if(!heroBg || !mqDesktop.matches || mqReduced.matches) return;
+    var y = window.pageYOffset || window.scrollY || 0;
+    heroBg.style.transform = 'translate3d(0,' + (y * 0.06).toFixed(1) + 'px,0)';
+  }
+  window.addEventListener('scroll', function(){
+    if(!mqDesktop.matches || mqReduced.matches) return;
+    if(!rafPending){
+      rafPending = true;
+      window.requestAnimationFrame(updateParallax);
+    }
+  }, {passive:true});
+  updateParallax();
+
+  /* ===== 渲染主入口 ===== */
+  function render(){
+    var h = parseHash();
+    state.route = h.route;
+
+    $$('section[data-route]').forEach(function(s){ s.classList.remove('active'); });
+    var sec = $('section[data-route="'+state.route+'"]');
+    if(sec){ sec.classList.add('active'); }
+
+    if(state.route==='home') renderHome();
+    if(state.route==='menu'){
+      if(h.q.tab) state.tab = h.q.tab;
+      if(h.q.end) state.end = h.q.end;
+      if(h.q.tab || h.q.end) state.sel = null;
+      renderMenu();
+    }
+    if(state.route==='order'){
+      if(h.q.id) { var f = findSvc(h.q.id); if(f){ state.order = {tab:f.tab, end:f.end, svc:f.svc}; } }
+      renderOrder();
+    }
+    if(state.route==='success') renderSuccess();
+    if(state.route==='orders') renderOrders();
+    if(state.route==='players') renderPlayers();
+    if(state.route==='join') renderJoin();
+
+    // 返回按钮显隐：非首页显示
+    $('#btnBack').style.display = (state.route==='home') ? 'none' : 'flex';
+    // 底部下单条仅点单页显示
+    $('#orderBar').style.display = (state.route==='menu') ? 'block' : 'none';
+
+    // 路由切换瞬时置顶（全局滚动已开启 smooth，这里避免切换抖动）
+    if('scrollBehavior' in document.documentElement.style){
+      window.scrollTo({top:0,left:0,behavior:'instant'});
+    } else {
+      window.scrollTo(0,0);
+    }
+    refreshDot();
+  }
+
+  function refreshDot(){
+    var n = getOrders().filter(function(o){return o.status==='pending';}).length;
+    $('#orderDot').style.display = n>0 ? 'block' : 'none';
+  }
+
+  /* ===== 首页 ===== */
+  function renderHome(){
+    // 滚动渐显
+    var secs = $$('.sec');
+    secs.forEach(function(p){
+      if(!p.classList.contains('reveal')) p.classList.add('reveal');
+    });
+    if('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+        });
+      }, {threshold:.12});
+      secs.forEach(function(el){ io.observe(el); });
+    } else {
+      secs.forEach(function(el){ el.classList.add('in'); });
+    }
+  }
+
+  /* ===== 点单页 ===== */
+  function renderMenu(){
+    $('#menuTitle').textContent = TAB_META[state.tab].name;
+    $('#menuSub').textContent = END_NAME[state.end];
+    $('#menuTip').textContent = TAB_META[state.tab].tip;
+
+    $$('#endSeg button').forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-end')===state.end);
+      b.onclick = function(){ state.end = b.getAttribute('data-end'); state.sel=null; renderMenu(); };
+    });
+    $$('#svcTabs button').forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-tab')===state.tab);
+      b.onclick = function(){ state.tab = b.getAttribute('data-tab'); state.sel=null; renderMenu(); };
+    });
+
+    var list = listOf(state.tab, state.end);
+    var box = $('#plans');
+    box.innerHTML = '';
+    list.forEach(function(s){
+      var isPlay = state.tab==='play';
+      var title = isPlay ? esc(s.tier) : ('保底 '+esc(s.tier));
+      var tagHtml = s.tag ? '<span class="tag '+(s.tag)+'">'+(s.tag==='hot'?'热门':(s.tag==='new'?'尝鲜':''))+'</span>' : '';
+      var el = document.createElement('div');
+      el.className = 'plan' + (state.sel===s.id?' sel':'');
+      el.innerHTML =
+        tagHtml +
+        '<div class="main">' +
+          '<div class="t">'+title+'</div>' +
+          '<div class="s">'+esc(s.desc)+'</div>' +
+          '<div class="lv">打手档位 · '+esc(s.lv)+'</div>' +
+        '</div>' +
+        '<div class="right"><b>¥'+money(s.price)+'</b><span>'+TAB_META[state.tab].unit+'</span></div>' +
+        '<span class="radio"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>';
+      el.onclick = function(){ state.sel = s.id; renderMenu(); };
+      box.appendChild(el);
+    });
+
+    // 底部下单条
+    var sel = state.sel ? findSvc(state.sel) : null;
+    var pk = state.selPlayer ? findPlayer(state.selPlayer) : null;
+    $('#sumT').textContent = sel ? (END_NAME[sel.end]+' · '+TAB_META[sel.tab].name+' · '+(sel.tab==='play'?sel.svc.tier:('保底'+sel.svc.tier))) : (pk ? ('已指定 ' + pk.name + ' · 请选择服务') : '请先选择服务');
+    $('#sumP').textContent = '¥' + (sel ? money(sel.svc.price) : 0);
+    $('#btnToOrder').disabled = !sel;
+    $('#btnToOrder').onclick = function(){ if(sel) nav('order', {id: sel.svc.id}); };
+  }
+
+  /* ===== 下单表单 ===== */
+  function renderOrder(){
+    var o = state.order;
+    if(!o){ nav('menu'); return; }
+    var s = o.svc;
+    $('#oName').textContent = (o.tab==='trial'?'体验引流单':(o.tab==='hut'?'护航保底单':'技术陪玩')) + ' · ' + (o.tab==='play'?s.tier:('保底'+s.tier));
+    $('#oDesc').textContent = END_NAME[o.end] + ' · 打手档位 ' + s.lv + ' · ' + s.desc;
+    $('#oPrice').textContent = '¥' + money(s.price);
+    $('#oUnit').textContent = TAB_META[o.tab].unit;
+
+    // 打手下拉：店方派单 + 营业中打手（含指定进入的预选）
+    var sel = $('#fPlayer');
+    var prev = sel.value;
+    var opts = '<option value="">店方派单（推荐）</option>';
+    var TIER_RANK2 = {新秀:0,精英:1,大神:2};
+    getPlayers().slice().sort(function(a,b){
+      if((a.on?1:0)!==(b.on?1:0)) return (b.on?1:0)-(a.on?1:0);
+      var r=(TIER_RANK2[b.tier]||0)-(TIER_RANK2[a.tier]||0);
+      if(r) return r;
+      return playerGames(b)-playerGames(a);
+    }).forEach(function(p){
+      if(!p.on) return;
+      opts += '<option value="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(p.tier)+' · 累计'+playerGames(p)+'单</option>';
+    });
+    sel.innerHTML = opts;
+    var want = state.selPlayer || prev;
+    if(want){ var hit = false; for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===want){ sel.selectedIndex=i; hit=true; break; } } if(hit){ state.selPlayer = null; } else { sel.selectedIndex=0; } }
+    sel.onchange = function(){ updatePlayerHint(); };
+
+    $('#btnSubmit').onclick = submitOrder;
+    $('#btnBackMenu').onclick = function(){ nav('menu'); };
+    $('#fRule').onclick = function(e){ e.preventDefault(); nav('terms'); };
+    updatePlayerHint();
+  }
+
+  function updatePlayerHint(){
+    var sel = $('#fPlayer');
+    var h = $('#fPlayerHint');
+    var id = sel.value;
+    if(!id){ h.style.display='none'; return; }
+    var p = findPlayer(id);
+    if(p){
+      h.style.display = 'block';
+      h.textContent = '已指定 ' + p.name + '（' + p.tier + '）。该打手当前' + (p.on?'营业中':'休息中') + '，订单将优先派给TA。';
+    } else {
+      h.style.display = 'none';
+    }
+  }
+
+  function validateOrder(){
+    var id = $('#fId').value.trim();
+    var sv = $('#fServer').value;
+    var ct = $('#fContact').value.trim();
+    if(!id){ alert('请填写游戏角色 ID'); return false; }
+    if(!sv || sv==='default'){ alert('请选择所在区服（QQ 区 / 微信区）'); return false; }
+    if(!ct){ alert('请填写联系方式'); return false; }
+    if(!$('#fAgree').checked){ alert('请先阅读并同意服务条款与风险提示'); return false; }
+    return true;
+  }
+
+  function submitOrder(){
+    if(!validateOrder()) return;
+    var o = state.order;
+    var list = getOrders();
+    var pid = $('#fPlayer').value || '';
+    var p = pid ? findPlayer(pid) : null;
+    var rec = {
+      no: genNo(),
+      tab: o.tab,
+      end: o.end,
+      svc: o.svc,
+      name: (o.tab==='trial'?'体验引流单':(o.tab==='hut'?'护航保底单':'技术陪玩')) + ' · ' + (o.tab==='play'?o.svc.tier:('保底'+o.svc.tier)),
+      endName: END_NAME[o.end],
+      server: SERVER_NAME[$('#fServer').value] || '',
+      playerId: p ? p.id : '',
+      playerName: p ? p.name : '',
+      price: o.svc.price,
+      contact: $('#fContact').value.trim(),
+      note: $('#fNote').value.trim(),
+      time: nowStr(),
+      status: 'pending'
+    };
+    list.unshift(rec);
+    setOrders(list);
+    syncOrderToWecom(rec);
+    state.order = null;
+    state.selPlayer = null;
+    ['fId','fContact','fNote'].forEach(function(k){ $('#'+k).value=''; });
+    $('#fServer').value='default'; $('#fAgree').checked=false;
+    nav('success', {no: rec.no});
+  }
+
+  /* ===== 成功页 ===== */
+  function renderSuccess(){
+    var h = parseHash();
+    var no = h.q.no;
+    var list = getOrders();
+    var rec = null;
+    for(var i=0;i<list.length;i++) if(list[i].no===no) rec = list[i];
+    if(!rec){ nav('orders'); return; }
+
+    var box = $('#ticket');
+    box.innerHTML =
+      '<div class="row"><span>订单号</span><b style="font-family:ui-monospace,Menlo,monospace;font-size:12px">'+esc(rec.no)+'</b></div>' +
+      '<div class="row"><span>服务</span><b>'+esc(rec.name)+'</b></div>' +
+      '<div class="row"><span>端 · 区服</span><b>'+rec.endName+' · '+(rec.server||'-')+'</b></div>' +
+      (rec.playerName ? '<div class="row"><span>指定打手</span><b class="ok">'+esc(rec.playerName)+'</b></div>' : '') +
+      '<div class="row"><span>金额</span><b style="color:var(--warn)">¥'+money(rec.price)+'</b></div>' +
+      '<div class="row"><span>状态</span><b class="ok">待打手接单</b></div>' +
+      '<div class="row"><span>联系方式</span><b>'+esc(rec.contact)+'</b></div>';
+  }
+
+  /* ===== 打手大厅 ===== */
+  var TIER_RANK = {新秀:0, 精英:1, 大神:2};
+  function renderPlayers(){
+    var list = getPlayers().slice().sort(function(a,b){
+      if((a.on?1:0)!==(b.on?1:0)) return (b.on?1:0)-(a.on?1:0);
+      var r = (TIER_RANK[b.tier]||0)-(TIER_RANK[a.tier]||0);
+      if(r) return r;
+      return (playerGames(b)-playerGames(a));
+    });
+    $('#pSub').textContent = onlineCount() + ' 人营业中 · 共 ' + list.length + ' 位打手';
+    var box = $('#playersList');
+    box.innerHTML = '';
+    if(!list.length){
+      box.innerHTML = '<div class="empty"><div class="em"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><p>还没有打手上架，邀请同学来入驻吧</p><button class="btn btn-primary" data-nav="join">打手入驻</button></div>';
+      return;
+    }
+    list.forEach(function(p){
+      var el = document.createElement('div');
+      el.className = 'p-card';
+      var endTxt = esc(p.end||'手游');
+      var tierCls = p.tier==='大神' ? '' : ' xin';
+      el.innerHTML =
+        '<div class="p-ava">'+esc((p.name||'?').slice(0,1))+'</div>' +
+        '<div class="p-main">' +
+          '<div class="p-name"><span>'+esc(p.name)+'</span><span class="p-tier'+tierCls+'">'+esc(p.tier||'新秀')+'</span></div>' +
+          '<div class="p-intro">'+esc(p.intro||'暂无简介')+'</div>' +
+          '<div class="p-meta">' +
+            '<span class="p-stat '+(p.on?'p-online':'p-offline')+'"><span class="p-dot '+(p.on?'on':'off')+'"></span>'+ (p.on?'营业中':'休息中') +'</span>' +
+            '<span class="p-stat">累计 <b>'+playerGames(p)+'</b> 单</span>' +
+            '<span class="p-end">'+endTxt+'</span>' +
+          '</div>' +
+          '<div class="p-toggle"><span class="ptt">店主维护营业状态（演示）</span><button data-toggle="'+esc(p.id)+'">'+(p.on?'设为休息':'设为营业')+'</button></div>' +
+        '</div>' +
+        '<button class="p-btn" data-pick="'+esc(p.id)+'" '+(p.on?'':'disabled')+'>指定TA</button>';
+      box.appendChild(el);
+    });
+  }
+
+  /* 打手大厅：指定打手 / 切换营业状态（事件委托） */
+  $('#playersList').addEventListener('click', function(e){
+    var pick = e.target.closest('[data-pick]');
+    if(pick && !pick.disabled){
+      var id = pick.getAttribute('data-pick');
+      var p = findPlayer(id);
+      if(p){
+        state.selPlayer = id;
+        state.sel = null;
+        nav('menu');
+      }
+      return;
+    }
+    var tg = e.target.closest('[data-toggle]');
+    if(tg){
+      var id2 = tg.getAttribute('data-toggle');
+      var p2 = findPlayer(id2);
+      if(p2){ p2.on = !p2.on; savePlayer(p2); renderPlayers(); }
+    }
+  });
+
+  /* ===== 打手入驻 ===== */
+  function renderJoin(){
+    $('#btnJoinSubmit').onclick = submitJoin;
+    $('#btnBackPlayers').onclick = function(){ nav('players'); };
+    $('#pjRule').onclick = function(e){ e.preventDefault(); nav('terms'); };
+  }
+
+  function submitJoin(){
+    var name = $('#pjName').value.trim();
+    var intro = $('#pjIntro').value.trim();
+    if(!name){ alert('请填写打手昵称'); return; }
+    if(!intro){ alert('请填写一句话简介'); return; }
+    if(!$('#pjAgree').checked){ alert('请先阅读并同意服务条款与打手守则'); return; }
+    var p = {
+      id: 'pl-' + Date.now().toString().slice(-6),
+      name: name,
+      tier: $('#pjTier').value,
+      end: $('#pjEnd').value,
+      intro: intro,
+      games: 0,
+      on: false
+    };
+    savePlayer(p);
+    ['pjName','pjIntro'].forEach(function(k){ $('#'+k).value=''; });
+    $('#pjAgree').checked = false;
+    alert('入驻申请已提交（演示版已写入本机打手库）。店方审核通过后将上架大厅。');
+    nav('players');
+  }
+
+  /* ===== 订单列表 ===== */
+  var STATUS_META = {
+    pending: {t:'待接单', c:'pending'},
+    doing:   {t:'护航中', c:'doing'},
+    done:    {t:'已完成', c:'done'}
+  };
+  function renderOrders(){
+    var list = getOrders();
+    $('#ordersSub').textContent = '共 ' + list.length + ' 单';
+    var box = $('#ordersList');
+    box.innerHTML = '';
+    if(!list.length){
+      box.innerHTML =
+        '<div class="empty">' +
+          '<div class="em"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12l2 4v16H4V6l2-4z"/><path d="M4 6h16"/><path d="M9 10h6"/><path d="M9 14h6"/></svg></div>' +
+          '<p>还没有订单，去下一单试试吧</p>' +
+          '<button class="btn btn-primary" data-nav="menu">去点单</button>' +
+        '</div>';
+      return;
+    }
+    list.forEach(function(o){
+      var st = STATUS_META[o.status] || STATUS_META.pending;
+      var el = document.createElement('div');
+      el.className = 'od';
+      el.innerHTML =
+        '<div class="top">' +
+          '<span class="st '+st.c+'">'+st.t+'</span>' +
+          '<span class="no">'+esc(o.no)+'</span>' +
+        '</div>' +
+        '<div class="t">'+esc(o.name)+'</div>' +
+        '<div class="s">'+o.endName+(o.server?(' · '+esc(o.server)):'')+' · 打手档位 '+esc(o.svc.lv)+(o.playerName?(' · 指定 '+esc(o.playerName)):'')+'</div>' +
+        '<div class="foot"><b>¥'+money(o.price)+'</b><span class="tm">'+esc(o.time)+'</span></div>';
+      box.appendChild(el);
+    });
+    var demo = document.createElement('button');
+    demo.className = 'btn btn-ghost';
+    demo.style.cssText = 'width:100%;margin-top:12px;';
+    demo.textContent = '载入 2 条示例订单（演示用）';
+    demo.onclick = function(){
+      var ex = [
+        {no:'XH'+Date.now().toString().slice(-12), tab:'hut', end:'mobile', svc:PRICE.hut.mobile[1], name:'护航保底单 · 保底688万', endName:'手游', server:'QQ 区', price:55, contact:'wx_demo01', note:'', time:nowStr(), status:'pending'},
+        {no:'XH'+Date.now().toString().slice(-12), tab:'play', end:'pc', svc:PRICE.play.pc[1], name:'技术陪玩 · 精英', endName:'PC 端', server:'微信区', price:50, contact:'qq_demo02', note:'', time:nowStr(), status:'done', playerId:'pl-01', playerName:'阿泽'}
+      ];
+      setOrders(ex.concat(getOrders()));
+      renderOrders(); refreshDot();
+    };
+    box.appendChild(demo);
+  }
+
+  /* ===== Cookie 条（淡入淡出 350ms） ===== */
+  (function(){
+    var bar = $('#cookieBar');
+    function hide(){
+      bar.classList.remove('show');
+      setTimeout(function(){ bar.classList.add('hide'); }, 350);
+    }
+    try{
+      if(localStorage.getItem('hh_cookie')==='ok'){ bar.classList.add('hide'); return; }
+    }catch(e){ bar.classList.add('hide'); return; }
+    // 下一帧加 show，触发淡入
+    window.requestAnimationFrame(function(){ bar.classList.add('show'); });
+    $('#cookieOk').onclick = function(){
+      try{ localStorage.setItem('hh_cookie','ok'); }catch(e){}
+      hide();
+    };
+    $('#cookieNo').onclick = hide;
+  })();
+
+  /* ===== 启动 ===== */
+  render();
+  refreshDot();
+
+})();
+</script>
+</body>
+</html>
